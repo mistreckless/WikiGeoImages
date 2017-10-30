@@ -1,4 +1,4 @@
-package com.example.mistreckless.wikilocationarticle.presentation.screen.wall
+package com.example.mistreckless.wikilocationarticle.presentation.screen.main
 
 import com.example.mistreckless.wikilocationarticle.domain.entity.Image
 

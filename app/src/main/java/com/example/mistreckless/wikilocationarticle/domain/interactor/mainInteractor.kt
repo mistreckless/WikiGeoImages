@@ -4,16 +4,12 @@ import android.util.Log
 import com.example.mistreckless.wikilocationarticle.data.repository.LocationRepository
 import com.example.mistreckless.wikilocationarticle.data.repository.WikiRepository
 import com.example.mistreckless.wikilocationarticle.domain.entity.*
-import com.example.mistreckless.wikilocationarticle.presentation.screen.wall.ImageWrapper
+import com.example.mistreckless.wikilocationarticle.presentation.screen.main.ImageWrapper
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
-import java.io.IOError
 import java.io.IOException
-import java.net.SocketException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 /**
  * Created by mistreckless on 27.10.17.

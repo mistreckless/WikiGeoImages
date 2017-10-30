@@ -3,7 +3,6 @@ package com.example.mistreckless.wikilocationarticle.app
 import android.app.Application
 import android.content.Context
 import com.example.mistreckless.wikilocationarticle.presentation.screen.main.MainActivity
-import com.example.mistreckless.wikilocationarticle.presentation.screen.main.MainActivityFragmentProvider
 import com.example.mistreckless.wikilocationarticle.presentation.screen.main.MainActivityModule
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -34,7 +33,7 @@ class AppModule{
 abstract class ActivityBuilder{
 
     @PerActivity
-    @ContributesAndroidInjector(modules = arrayOf(MainActivityModule::class, MainActivityFragmentProvider::class))
+    @ContributesAndroidInjector(modules = arrayOf(MainActivityModule::class))
     abstract fun provideMainActivity() : MainActivity
 
 }
