@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposables
 
@@ -22,19 +23,20 @@ class NetworkConnectionListenerImpl(private val context: Context) : NetworkConne
         return Observable.create { e ->
             val receiver = object : NetworkChangeReceiver() {
                 override fun onConnectionStateChanged(isConnected: Boolean) {
-                    e.onNext(isConnected)
+                    if (!e.isDisposed)
+                        e.onNext(isConnected)
                 }
             }
             context.registerReceiver(receiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
-            e.setDisposable(Disposables.fromAction { context.unregisterReceiver(receiver) })
+            e.setDisposable(Disposables.fromAction {
+                Log.e("networkRec","UNREGISTERED")
+                context.unregisterReceiver(receiver) })
         }
     }
 
 }
 
 abstract class NetworkChangeReceiver : BroadcastReceiver() {
-
-    private var isConnected = false
 
     override fun onReceive(context: Context, intent: Intent) {
         isNetworkAvailable(context)
