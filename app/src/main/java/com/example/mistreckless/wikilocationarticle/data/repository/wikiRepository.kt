@@ -28,12 +28,9 @@ class WikiRepositoryImpl(private val wikiApi: WikiApi,private val networkConnect
                 append(it)
                 append("|")
             }
-
         }
         return wikiApi.getImages(idsLine.toString(), next)
-                .map {res->
-                    Pair(res.query.pages.values.map { Image(it.title,res.cont) }.toList(), res.cont)
-                }
+                .map {res-> Pair(res.query.pages.values.map { Image(it.title,res.cont) }.toList(), res.cont) }
                 .subscribeOn(Schedulers.io())
     }
 

@@ -16,10 +16,13 @@ import javax.inject.Inject
 @InjectViewState
 class MainActivityPresenter @Inject constructor(private val wallInteractor: WallInteractor) : BasePresenter<MainActivityView>() {
     override fun onFirstViewAttach() {
-        viewState.initUi()
+        viewState.requestLocationPermission()
     }
 
-
+    fun locationPermissionsResult(granted : Boolean){
+        if (granted) viewState.initUi()
+        else viewState.requestLocationPermission()
+    }
 
     fun controlList(observeScroll: Observable<Int>, imageWrapper: ImageWrapper) {
         viewDisposable.add(wallInteractor.controlList(observeScroll,imageWrapper)
