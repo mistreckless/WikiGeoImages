@@ -29,7 +29,7 @@ class Wall : BaseFragment<WallPresenter>(),WallView{
     override fun initUi() {
         recyclerView.layoutManager=LinearLayoutManager(context)
         recyclerView.adapter=adapter
-        presenter.controlList(recyclerView.observeScroll())
+        presenter.controlList(recyclerView.observeScroll(), ImageWrapper(adapter))
     }
 
     override fun requestLocationPermission() {

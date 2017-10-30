@@ -26,8 +26,8 @@ class WallPresenter(private val wallInteractor: WallInteractor) : BasePresenter<
         const val TAG = "WallPresenter"
     }
 
-    fun controlList(observeScroll: Observable<Int>) {
-        viewDisposable.add(wallInteractor.controlList(observeScroll)
+    fun controlList(observeScroll: Observable<Int>, imageWrapper: ImageWrapper) {
+        viewDisposable.add(wallInteractor.controlList(observeScroll,imageWrapper)
                 .subscribe({ state ->
                     when (state) {
                         is StateError -> when (state.errorType) {

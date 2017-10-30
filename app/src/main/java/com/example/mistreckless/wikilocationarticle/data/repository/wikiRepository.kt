@@ -31,9 +31,8 @@ class WikiRepositoryImpl(private val wikiApi: WikiApi,private val networkConnect
 
         }
         return wikiApi.getImages(idsLine.toString(), next)
-                .map {
-                  //  Log.e("keyssuka",it.toString())
-                    Pair(it.query.pages.values.map { Image(it.title) }.toList(), it.cont)
+                .map {res->
+                    Pair(res.query.pages.values.map { Image(it.title,res.cont) }.toList(), res.cont)
                 }
                 .subscribeOn(Schedulers.io())
     }
