@@ -47,8 +47,8 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
                         else -> Observable.just(state)
                     }
                 }
-                .onErrorReturn { handleError(it) }
-                .observeOn(AndroidSchedulers.mainThread()))
+                .onErrorReturn { handleError(it) })
+                .observeOn(AndroidSchedulers.mainThread())
     }
 
     private fun fetchArticles(): Observable<FetchImagesState> {
