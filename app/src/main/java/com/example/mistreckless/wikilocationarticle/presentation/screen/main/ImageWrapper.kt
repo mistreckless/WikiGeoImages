@@ -8,4 +8,7 @@ import com.example.mistreckless.wikilocationarticle.domain.entity.Image
 class ImageWrapper(private val imageAdapter: ImageAdapter){
 
     fun getLastImage() : Image?=if (imageAdapter.items.isNotEmpty()) imageAdapter.items.last() else null
+
+    fun getItemCount() : Int = imageAdapter.itemCount
+
 }

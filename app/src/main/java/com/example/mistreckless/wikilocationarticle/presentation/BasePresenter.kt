@@ -11,11 +11,9 @@ import io.reactivex.disposables.CompositeDisposable
 abstract class BasePresenter<V : BaseView> : MvpPresenter<V>() {
     protected val viewDisposable by lazy { CompositeDisposable() }
 
-    override fun detachView(view: V) {
+    override fun destroyView(view: V) {
         viewDisposable.clear()
-        super.detachView(view)
+        super.destroyView(view)
     }
 
 }
-
-val presenterHolder: MutableMap<String, BasePresenter<*>> = HashMap()

@@ -44,6 +44,7 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
                     }
                 }
                 .onErrorReturn { handleError(it) })
+                .onErrorReturn { handleError(it) }
                 .observeOn(AndroidSchedulers.mainThread())
     }
 
@@ -58,7 +59,8 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
 
     private fun paginControl(observeScroll: Observable<Int>, imageWrapper: ImageWrapper, pageIds: Array<Long>, maxPageIdsPerRequest: Int): Observable<FetchImagesState> {
         val requestParts = calculateRequestsPart(pageIds, maxPageIdsPerRequest)
-        return Observable.combineLatest(wikiRepository.listenNetworkState(), observeScroll.distinctUntilChanged(), BiFunction { isConnected: Boolean, _: Int -> isConnected })
+        val skipValue : Long = if (imageWrapper.getItemCount()==0) 0 else 1
+        return Observable.combineLatest(wikiRepository.listenNetworkState(), observeScroll.skip(skipValue).distinctUntilChanged(), BiFunction { isConnected: Boolean, _: Int -> isConnected })
                 .flatMapSingle { isConnected ->
                     val lastImage = imageWrapper.getLastImage()
                     Log.e("lastImage", lastImage.toString() + "requestPartIndex " + requestPartIndex + " countArr " + requestParts.lastIndex)
