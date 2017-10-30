@@ -30,7 +30,7 @@ class MainActivityPresenter @Inject constructor(private val wallInteractor: Wall
                     when (state) {
                         is StateError -> when (state.errorType) {
                             ErrorType.RESPONSE_ERROR -> {
-                                Log.e(TAG,"respError")
+                                Log.e(TAG,state.message)
                             }
                             ErrorType.NETWORK_CONNECTION_ERROR -> {
                                 Log.e(TAG,"networkEror")

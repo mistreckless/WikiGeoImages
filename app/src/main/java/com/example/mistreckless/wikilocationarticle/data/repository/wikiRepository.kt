@@ -2,8 +2,7 @@ package com.example.mistreckless.wikilocationarticle.data.repository
 
 import com.example.mistreckless.wikilocationarticle.data.network.NetworkConnectionListener
 import com.example.mistreckless.wikilocationarticle.data.network.WikiApi
-import com.example.mistreckless.wikilocationarticle.domain.entity.Article
-import com.example.mistreckless.wikilocationarticle.domain.entity.Image
+import com.example.mistreckless.wikilocationarticle.domain.entity.*
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
@@ -14,7 +13,7 @@ import io.reactivex.schedulers.Schedulers
 
 interface WikiRepository {
 
-    fun getNearestArticles(lat: Double, lon: Double): Single<List<Article>>
+    fun getNearestArticles(lat: Double, lon: Double): Single<FetchImagesState>
 
     fun getPageImages(pageIds: Array<Long>, next: Map<String,String>?): Single<Pair<List<Image>,Map<String,String>?>>
     fun listenNetworkState(): Observable<Boolean>
@@ -34,10 +33,14 @@ class WikiRepositoryImpl(private val wikiApi: WikiApi,private val networkConnect
                 .subscribeOn(Schedulers.io())
     }
 
-    override fun getNearestArticles(lat: Double, lon: Double): Single<List<Article>> {
+    override fun getNearestArticles(lat: Double, lon: Double): Single<FetchImagesState> {
         val pipeLine = lat.toString() + "|" + lon.toString()
         return wikiApi.getGeoArticles(pipeLine)
-                .map { response -> response.query.items.map { Article(it.pageId) } }
+                .map { response ->
+                    if (response.error==null)
+                    StateArticlesLoaded(response.query.items.filter { it.pageId>=0 }.map { Article(it.pageId) })
+                    else StateError(ErrorType.RESPONSE_ERROR,response.error.toString())
+                }
                 .subscribeOn(Schedulers.io())
     }
 

@@ -51,7 +51,6 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
     private fun fetchArticles(): Observable<FetchImagesState> {
         return locationRepository.getLastKnownLocation()
                 .flatMap { wikiRepository.getNearestArticles(it.first, it.second) }
-                .map<FetchImagesState> { articles -> StateArticlesLoaded(articles.filter { it.pageId >= 0 }) }
                 .onErrorReturn { handleError(it) }
                 .toObservable()
                 .observeOn(AndroidSchedulers.mainThread())

@@ -11,7 +11,7 @@ class StateInit() : FetchImagesState()
 
 class StateArticlesLoaded(val articles : List<Article>) : FetchImagesState()
 
-data class StateError(val errorType : ErrorType) : FetchImagesState()
+data class StateError(val errorType : ErrorType, val message : String="") : FetchImagesState()
 
 data class StatePartImagesLoaded(val images : List<Image>) : FetchImagesState()
 
