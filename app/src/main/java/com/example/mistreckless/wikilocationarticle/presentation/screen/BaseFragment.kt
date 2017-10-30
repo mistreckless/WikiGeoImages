@@ -15,17 +15,17 @@ import javax.inject.Inject
  * Created by mistreckless on 27.10.17.
  */
 
-abstract class BaseFragment<P : BasePresenter<*,*>> : Fragment(),BaseView{
+abstract class BaseFragment<P : BasePresenter<*, *>> : Fragment(), BaseView {
 
     @Inject
-    lateinit var presenter : P
+    lateinit var presenter: P
 
 
     override fun onAttach(context: Context?) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)
         presenter.attachRouter(getRouter())
-        retainInstance=true
+        retainInstance = true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,20 +33,22 @@ abstract class BaseFragment<P : BasePresenter<*,*>> : Fragment(),BaseView{
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater?.inflate(getLayoutId(),container,false)
+        return inflater?.inflate(getLayoutId(), container, false)
     }
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         presenter.attachView(this)
 
-        if (savedInstanceState==null) presenter.onViewFirstAttached()
+        if (savedInstanceState == null) presenter.onViewFirstAttached()
 
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
-        presenter.onViewRestored()
+        if (savedInstanceState != null)
+            presenter.onViewRestored()
     }
+
 
     override fun onDestroyView() {
         presenter.detachView()
@@ -61,5 +63,5 @@ abstract class BaseFragment<P : BasePresenter<*,*>> : Fragment(),BaseView{
     @LayoutRes
     protected abstract fun getLayoutId(): Int
 
-    protected abstract fun getRouter() : BaseRouter
+    protected abstract fun getRouter(): BaseRouter
 }

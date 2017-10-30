@@ -1,13 +1,18 @@
 package com.example.mistreckless.wikilocationarticle.data
 
+import android.content.Context
+import com.example.mistreckless.wikilocationarticle.BuildConfig
 import com.example.mistreckless.wikilocationarticle.data.location.RxLocation
 import com.example.mistreckless.wikilocationarticle.data.location.RxLocationImpl
+import com.example.mistreckless.wikilocationarticle.data.network.NetworkConnectionListener
+import com.example.mistreckless.wikilocationarticle.data.network.NetworkConnectionListenerImpl
 import com.example.mistreckless.wikilocationarticle.data.network.WikiApi
-import com.example.mistreckless.wikilocationarticle.data.network.WikiImagesConverterFactory
 import com.example.mistreckless.wikilocationarticle.data.repository.LocationRepository
 import com.example.mistreckless.wikilocationarticle.data.repository.LocationRepositoryImpl
 import com.example.mistreckless.wikilocationarticle.data.repository.WikiRepository
 import com.example.mistreckless.wikilocationarticle.data.repository.WikiRepositoryImpl
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.android.gms.location.FusedLocationProviderClient
 import dagger.Module
 import dagger.Provides
@@ -15,9 +20,8 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.jackson.JacksonConverterFactory
 import java.util.concurrent.TimeUnit
-import javax.inject.Named
 import javax.inject.Singleton
 
 /**
@@ -34,7 +38,7 @@ class RepositoryModule {
 
     @Singleton
     @Provides
-    fun provideWikiRepository(@Named("defaultApi")wikiApi: WikiApi, @Named("imagesApi") imagesWikiApi : WikiApi): WikiRepository = WikiRepositoryImpl(wikiApi,imagesWikiApi)
+    fun provideWikiRepository(wikiApi: WikiApi,networkConnectionListener: NetworkConnectionListener): WikiRepository = WikiRepositoryImpl(wikiApi,networkConnectionListener)
 
 }
 
@@ -44,17 +48,20 @@ class NetworkModule {
 
     @Singleton
     @Provides
-    @Named("defaultApi")
     fun provideWikiApi(): WikiApi {
         val builder = OkHttpClient.Builder()
-        builder.connectTimeout(10, TimeUnit.SECONDS)
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.level=HttpLoggingInterceptor.Level.BODY
-        builder.addInterceptor(interceptor)
+        builder.connectTimeout(3, TimeUnit.SECONDS)
+        if (BuildConfig.DEBUG) {
+            val interceptor = HttpLoggingInterceptor()
+            interceptor.level = HttpLoggingInterceptor.Level.BODY
+            builder.addInterceptor(interceptor)
+        }
+        val mapper = ObjectMapper()
+        mapper.registerModule(KotlinModule())
         return Retrofit.Builder()
                 .client(builder.build())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(JacksonConverterFactory.create(mapper))
                 .baseUrl("https://en.wikipedia.org/")
                 .build()
                 .create(WikiApi::class.java)
@@ -62,21 +69,8 @@ class NetworkModule {
 
     @Singleton
     @Provides
-    @Named("imagesApi")
-    fun provideImagesWikiApi() : WikiApi{
-        val builder = OkHttpClient.Builder()
-        builder.connectTimeout(10, TimeUnit.SECONDS)
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.level= HttpLoggingInterceptor.Level.BODY
-        builder.addInterceptor(interceptor)
-        return Retrofit.Builder()
-                .client(builder.build())
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(WikiImagesConverterFactory())
-                .baseUrl("https://en.wikipedia.org/")
-                .build()
-                .create(WikiApi::class.java)
-    }
+    fun provideNetworkConnectionListener(context: Context) : NetworkConnectionListener = NetworkConnectionListenerImpl(context)
+
 }
 
 @Singleton

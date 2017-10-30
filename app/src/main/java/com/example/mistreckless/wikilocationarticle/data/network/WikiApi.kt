@@ -19,12 +19,15 @@ interface WikiApi {
                        @Query("action") action: String = "query",
                        @Query("list") list: String = "geosearch",
                        @Query("gsradius") radius: Int = 10000,
-                       @Query("limit") limit: Int = 50,
+                       @Query("gslimit") limit: Int = 50,
                        @Query("format") format: String = "json"): Single<ArticleResponse>
 
     @GET("w/api.php")
-    fun getImages(@Query("pageids") pageId: Long,
+    fun getImages(@Query("pageids") pageIds: String,
+                  @QueryMap cont : Map<String,String>?,
+                  @Query("gimlimit") limit: Int=50,
                   @Query("action") action: String="query",
                   @Query("prop") prop: String="images",
+                  @Query("generator") generator : String="images",
                   @Query("format") format: String="json") : Single<ImageResponse>
 }
