@@ -9,15 +9,15 @@ sealed class FetchImagesState
 
 class StateInit() : FetchImagesState()
 
-class StateArticlesLoaded(val articles : List<Article>) : FetchImagesState()
+class StatePageIdsLoaded(val pageIds: Array<Long>) : FetchImagesState()
 
 data class StateError(val errorType : ErrorType, val message : String="") : FetchImagesState()
 
 data class StatePartImagesLoaded(val images : List<Image>) : FetchImagesState()
 
-class StateDone() : FetchImagesState()
+class StateDone : FetchImagesState()
 
-class StateConnectionRemainded() : FetchImagesState()
+class StateConnectionRemained : FetchImagesState()
 
 enum class ErrorType {
     NETWORK_CONNECTION_ERROR, RESPONSE_ERROR

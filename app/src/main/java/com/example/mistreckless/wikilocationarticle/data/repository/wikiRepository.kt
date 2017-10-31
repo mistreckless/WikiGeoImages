@@ -15,21 +15,24 @@ interface WikiRepository {
 
     fun getNearestArticles(lat: Double, lon: Double): Single<FetchImagesState>
 
-    fun getPageImages(pageIds: Array<Long>, next: Map<String,String>?): Single<Pair<List<Image>,Map<String,String>?>>
+    fun getPageImages(pageIds: Array<Long>, next: Map<String, String>?): Single<FetchImagesState>
     fun listenNetworkState(): Observable<Boolean>
 
 }
 
-class WikiRepositoryImpl(private val wikiApi: WikiApi,private val networkConnectionListener: NetworkConnectionListener) : WikiRepository {
-    override fun getPageImages(pageIds: Array<Long>, next: Map<String,String>?): Single<Pair<List<Image>,Map<String,String>?>> {
+class WikiRepositoryImpl(private val wikiApi: WikiApi, private val networkConnectionListener: NetworkConnectionListener) : WikiRepository {
+    override fun getPageImages(pageIds: Array<Long>, next: Map<String, String>?): Single<FetchImagesState> {
         val idsLine = StringBuilder().apply {
-            pageIds.take(pageIds.size-1).map {
+            pageIds.take(pageIds.size - 1).map {
                 append(it)
                 append("|")
             }
         }
         return wikiApi.getImages(idsLine.toString(), next)
-                .map {res-> Pair(res.query.pages.values.map { Image(it.title,res.cont) }.toList(), res.cont) }
+                .map { response ->
+                    if (response.error == null) StatePartImagesLoaded(response.query.pages.values.map { Image(it.title, response.cont) })
+                    else StateError(ErrorType.RESPONSE_ERROR, response.error.toString())
+                }
                 .subscribeOn(Schedulers.io())
     }
 
@@ -37,12 +40,14 @@ class WikiRepositoryImpl(private val wikiApi: WikiApi,private val networkConnect
         val pipeLine = lat.toString() + "|" + lon.toString()
         return wikiApi.getGeoArticles(pipeLine)
                 .map { response ->
-                    if (response.error==null)
-                    StateArticlesLoaded(response.query.items.filter { it.pageId>=0 }.map { Article(it.pageId) })
-                    else StateError(ErrorType.RESPONSE_ERROR,response.error.toString())
+                    if (response.error == null)
+                        StatePageIdsLoaded(response.query.items.filter { it.pageId >= 0 }.map { it.pageId }.toTypedArray())
+                    else StateError(ErrorType.RESPONSE_ERROR, response.error.toString())
                 }
                 .subscribeOn(Schedulers.io())
     }
 
     override fun listenNetworkState(): Observable<Boolean> = networkConnectionListener.listen()
+
+
 }

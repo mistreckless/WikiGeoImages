@@ -39,13 +39,8 @@ class NetworkConnectionListenerImpl(private val context: Context) : NetworkConne
 abstract class NetworkChangeReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        isNetworkAvailable(context)
-    }
-
-    private fun isNetworkAvailable(context: Context): Boolean {
         val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        onConnectionStateChanged(connectivity?.activeNetworkInfo != null)
-        return false
+        onConnectionStateChanged(connectivity.activeNetworkInfo != null)
     }
 
     abstract fun onConnectionStateChanged(isConnected: Boolean)

@@ -9,7 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ImageResponse(@JsonProperty("continue") val cont : Map<String,String>? = null,
-                         @JsonProperty("query") val query: ImageQuery = ImageQuery())
+                         @JsonProperty("query") val query: ImageQuery = ImageQuery(),
+                         @JsonProperty("error") val error : Error?=null)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ImageQuery(@JsonProperty("pages") val pages: Map<String, ImageItem> = mapOf())
