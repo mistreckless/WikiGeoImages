@@ -2,6 +2,9 @@ package com.example.mistreckless.wikilocationarticle.app
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
+import android.support.multidex.MultiDex
+import android.support.multidex.MultiDexApplication
 import com.example.mistreckless.wikilocationarticle.data.LocationModule
 import com.example.mistreckless.wikilocationarticle.data.NetworkModule
 import com.example.mistreckless.wikilocationarticle.data.RepositoryModule
@@ -15,7 +18,13 @@ import javax.inject.Inject
  * Created by mistreckless on 26.10.17.
  */
 
-class App : Application(), HasActivityInjector{
+class App : MultiDexApplication(), HasActivityInjector{
+
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        MultiDex.install(this)
+    }
+
     @Inject
     lateinit var activityInjector : DispatchingAndroidInjector<Activity>
 

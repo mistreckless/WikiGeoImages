@@ -1,14 +1,15 @@
 package com.example.mistreckless.wikilocationarticle.domain.interactor
 
 import android.util.Log
+import com.example.mistreckless.wikilocationarticle.data.location.LocationException
 import com.example.mistreckless.wikilocationarticle.data.repository.LocationRepository
 import com.example.mistreckless.wikilocationarticle.data.repository.WikiRepository
+import com.example.mistreckless.wikilocationarticle.domain.*
 import com.example.mistreckless.wikilocationarticle.domain.entity.*
-import com.example.mistreckless.wikilocationarticle.presentation.screen.main.ImageWrapper
+import com.example.mistreckless.wikilocationarticle.presentation.view.ImageAdapterWrapper
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.functions.BiFunction
 import java.io.IOException
 
 /**
@@ -17,7 +18,7 @@ import java.io.IOException
 
 interface WallInteractor {
 
-    fun controlList(observeScroll: Observable<Int>, imageWrapper: ImageWrapper): Observable<FetchImagesState>
+    fun controlList(observeScroll: Observable<Int>, imageAdapterWrapper: ImageAdapterWrapper, initialScrollValue: Int, limitPageIds: Int): Observable<FetchImagesState>
 }
 
 class WallInteractorImpl(private val wikiRepository: WikiRepository, private val locationRepository: LocationRepository) : WallInteractor {
@@ -25,46 +26,52 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
     private var requestPartIndex = 0
     private var pageIds: Array<Long> = arrayOf()
 
-    override fun controlList(observeScroll: Observable<Int>, imageWrapper: ImageWrapper): Observable<FetchImagesState> {
-        val initialObservable: Observable<FetchImagesState> = Observable.just(StateInit())
-        val pageIdsObservable by lazy { if (pageIds.isEmpty()) fetchArticles() else Observable.just(StatePageIdsLoaded(pageIds)) }
-        val paginObservable by lazy {   paginControl(observeScroll,imageWrapper,pageIds, MAX_PAGE_IDS_PER_REQUEST)}
+    override fun controlList(observeScroll: Observable<Int>, imageAdapterWrapper: ImageAdapterWrapper, initialScrollValue: Int, limitPageIds: Int): Observable<FetchImagesState> {
+        val skipCount = (if (pageIds.isEmpty()) 0 else 1).toLong()
 
-        return Observable.merge(initialObservable,pageIdsObservable)
+        val initialObservable by lazy { Observable.just(StateInit()) }
+        val pageIdsObservable by lazy { if (pageIds.isEmpty()) controlPageIds(limitPageIds) else Observable.just(StatePageIdsLoaded(pageIds)) }
+        val paginObservable by lazy { paginControl(observeScroll, skipCount, initialScrollValue, imageAdapterWrapper, calculateRequestsPart(pageIds, wikiRepository.getMaxPageIdsPerRequest())) }
+
+        return Observable.merge(initialObservable, pageIdsObservable)
                 .flatMap { if (it is StatePageIdsLoaded) paginObservable else Observable.just(it) }
                 .observeOn(AndroidSchedulers.mainThread())
     }
 
-    private fun fetchArticles(): Observable<FetchImagesState> {
-        var isCalled=false
+
+    private fun controlPageIds(limit: Int): Observable<FetchImagesState> {
         return wikiRepository.listenNetworkState()
                 .flatMapSingle {
-                    if (!isCalled)
-                    locationRepository.getLastKnownLocation()
-                            .flatMap { wikiRepository.getNearestArticles(it.first, it.second) }
-                            .onErrorReturn { handleFetchImageError(it) }
-                            .doOnSuccess {
-                                if (it is StatePageIdsLoaded) {
-                                    this.pageIds = it.pageIds
-                                    isCalled=true
-                                }
-                            }
+                    if (pageIds.isEmpty()) fetchPageIds(limit)
                     else Single.just(StateConnectionRemained())
                 }
+                .doOnNext { if (it is StatePageIdsLoaded) this.pageIds = it.pageIds }
                 .observeOn(AndroidSchedulers.mainThread())
     }
 
-    private fun paginControl(observeScroll: Observable<Int>, imageWrapper: ImageWrapper, pageIds: Array<Long>, maxPageIdsPerRequest: Int): Observable<FetchImagesState> {
-        val requestParts = calculateRequestsPart(pageIds, maxPageIdsPerRequest)
-        val skipValue: Long = if (imageWrapper.getItemCount() == 0) 0 else 1
-        return Observable.combineLatest(wikiRepository.listenNetworkState(), observeScroll.skip(skipValue).distinctUntilChanged(), BiFunction { isConnected: Boolean, _: Int -> isConnected })
+
+    private fun fetchPageIds(limit: Int): Single<FetchImagesState> {
+        return locationRepository.getLastKnownLocation()
+                .flatMap { wikiRepository.getNearestArticles(it.first, it.second, limit) }
+                .onErrorReturn { handleFetchImageError(it) }
+    }
+
+    private fun paginControl(observeScroll: Observable<Int>, skipCount: Long, initialScrollValue: Int, imageAdapterWrapper: ImageAdapterWrapper, requestParts: Array<Array<Long>>): Observable<FetchImagesState> {
+        var initialValue = initialScrollValue
+
+        return wikiRepository.listenNetworkState()
+                .filter { it }
+                .flatMap { observeScroll }
+                .map { if (it == initialScrollValue) initialValue else it }
+                .skip(skipCount)
+                .distinctUntilChanged()
                 .flatMapSingle {
-                    val lastImage = imageWrapper.getLastImage()
-                    Log.e("lastImage", lastImage.toString() + "requestPartIndex " + requestPartIndex + " countArr " + requestParts.lastIndex)
+                    val lastImage = imageAdapterWrapper.getLastImage()
 
                     if (lastImage == null) fetchImages(requestParts[requestPartIndex], emptyMap())
                     else nextImagesControl(lastImage, requestParts)
                 }
+                .doOnNext { if (it is StateError) initialValue++ }
                 .onErrorReturn { handleFetchImageError(it) }
     }
 
@@ -74,20 +81,17 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
                 .onErrorReturn { handleFetchImageError(it) }
     }
 
-    private fun checkPageIdsAndState(pageIds: Array<Long>,isConnected : Boolean): Observable<FetchImagesState> {
-        return if (pageIds.isEmpty()) fetchArticles() else Observable.just<FetchImagesState>( if (isConnected)StatePageIdsLoaded(pageIds) else StateConnectionRemained())
-    }
-
 
     private fun nextImagesControl(lastImage: Image, requestParts: Array<Array<Long>>): Single<FetchImagesState> {
         val next = lastImage.next
-        return if (next == null && requestPartIndex == requestParts.lastIndex) {
-            Single.just(StateDone())
-        } else if (next != null) {
-            fetchImages(requestParts[requestPartIndex], next)
-        } else {
-            requestPartIndex++
-            fetchImages(requestParts[requestPartIndex], emptyMap())
+
+        return when {
+            next != null -> fetchImages(requestParts[requestPartIndex], next)
+            requestPartIndex < requestParts.lastIndex -> {
+                requestPartIndex++
+                fetchImages(requestParts[requestPartIndex], emptyMap())
+            }
+            else -> Single.just<FetchImagesState>(StateDone())
         }
     }
 
@@ -97,12 +101,11 @@ class WallInteractorImpl(private val wikiRepository: WikiRepository, private val
         return Array(requestPartsSize, { pageIds.copyOfRange(it * maxPageIdsPerRequest, if (((it * maxPageIdsPerRequest) + maxPageIdsPerRequest) > pageIds.size) pageIds.size else ((it * maxPageIdsPerRequest) + maxPageIdsPerRequest)) })
     }
 
-    private fun handleFetchImageError(err: Throwable): FetchImagesState = when (err) {
-        is IOException -> StateError(ErrorType.NETWORK_CONNECTION_ERROR)
-        else -> StateError(ErrorType.RESPONSE_ERROR)
-    }
-    companion object {
-        const val MAX_PAGE_IDS_PER_REQUEST = 50
-    }
+    private fun handleFetchImageError(err: Throwable): FetchImagesState = StateError(when (err) {
+        is IOException -> ErrorType.NETWORK_CONNECTION_ERROR
+        is LocationException -> ErrorType.LOCATION_ERROR
+        else -> ErrorType.RESPONSE_ERROR
+    }, err.message ?: "")
+
 
 }

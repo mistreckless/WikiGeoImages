@@ -1,4 +1,6 @@
-package com.example.mistreckless.wikilocationarticle.domain.entity
+package com.example.mistreckless.wikilocationarticle.domain
+
+import com.example.mistreckless.wikilocationarticle.domain.entity.Image
 
 /**
  * Created by mistreckless on 27.10.17.
@@ -7,7 +9,7 @@ package com.example.mistreckless.wikilocationarticle.domain.entity
 
 sealed class FetchImagesState
 
-class StateInit() : FetchImagesState()
+class StateInit : FetchImagesState()
 
 class StatePageIdsLoaded(val pageIds: Array<Long>) : FetchImagesState()
 
@@ -20,5 +22,5 @@ class StateDone : FetchImagesState()
 class StateConnectionRemained : FetchImagesState()
 
 enum class ErrorType {
-    NETWORK_CONNECTION_ERROR, RESPONSE_ERROR
+    NETWORK_CONNECTION_ERROR, RESPONSE_ERROR, LOCATION_ERROR
 }

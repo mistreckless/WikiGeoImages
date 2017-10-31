@@ -28,9 +28,7 @@ class NetworkConnectionListenerImpl(private val context: Context) : NetworkConne
                 }
             }
             context.registerReceiver(receiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
-            e.setDisposable(Disposables.fromAction {
-                Log.e("networkRec","UNREGISTERED")
-                context.unregisterReceiver(receiver) })
+            e.setDisposable(Disposables.fromAction { context.unregisterReceiver(receiver) })
         }
     }
 

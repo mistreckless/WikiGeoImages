@@ -1,4 +1,4 @@
-package com.example.mistreckless.wikilocationarticle.presentation.screen.main
+package com.example.mistreckless.wikilocationarticle.presentation.view
 
 import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup

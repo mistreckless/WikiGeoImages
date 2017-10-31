@@ -19,7 +19,7 @@ interface WikiApi {
                        @Query("action") action: String = "query",
                        @Query("list") list: String = "geosearch",
                        @Query("gsradius") radius: Int = 10000,
-                       @Query("gslimit") limit: Int = 50,
+                       @Query("gslimit") limit: Int,
                        @Query("format") format: String = "json"): Single<ArticleResponse>
 
     @GET("w/api.php")

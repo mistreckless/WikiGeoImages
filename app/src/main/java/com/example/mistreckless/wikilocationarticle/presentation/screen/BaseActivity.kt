@@ -3,8 +3,11 @@ package com.example.mistreckless.wikilocationarticle.presentation.screen
 import android.os.Bundle
 import android.support.annotation.LayoutRes
 import android.support.v7.app.AppCompatActivity
+import android.widget.Toast
 import com.arellomobile.mvp.MvpDelegate
 import com.arellomobile.mvp.MvpView
+import com.arellomobile.mvp.viewstate.strategy.SkipStrategy
+import com.arellomobile.mvp.viewstate.strategy.StateStrategyType
 import com.example.mistreckless.wikilocationarticle.presentation.BasePresenter
 import dagger.android.AndroidInjection
 import javax.inject.Inject
@@ -54,8 +57,16 @@ abstract class BaseActivity<P : BasePresenter<out BaseView>> : AppCompatActivity
         super.onDestroy()
     }
 
+    override fun showToast(message: String) {
+        Toast.makeText(this,message,Toast.LENGTH_SHORT).show()
+    }
+
     @LayoutRes
     protected abstract fun getLayoutId(): Int
 }
 
-interface BaseView : MvpView
+interface BaseView : MvpView{
+
+    @StateStrategyType(SkipStrategy::class)
+    fun showToast(message : String)
+}

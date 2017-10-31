@@ -9,9 +9,9 @@ import io.reactivex.disposables.Disposables
  * Created by @mistreckless on 29.10.2017. !
  */
 
-fun RecyclerView.observeScroll(): Observable<Int> = Observable.create { e ->
+fun RecyclerView.observeScroll(initialValue: Int): Observable<Int> = Observable.create { e ->
     if (!e.isDisposed)
-        e.onNext(layoutManager.itemCount)
+        e.onNext(initialValue)
     val listener = object : RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
             super.onScrolled(recyclerView, dx, dy)
